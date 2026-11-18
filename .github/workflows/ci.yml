@@ -1,5 +1,8 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 jobs:
   build-test:
     strategy:
@@ -12,11 +15,16 @@ jobs:
             cxx: clang++
           - os: macos-latest
             cxx: clang++
+            optional: true
           - os: windows-latest
             cxx: ""
     runs-on: ${{ matrix.os }}
+    # Hosted macOS runners are often unavailable for a long time; a macOS job that
+    # cannot start must not mark the whole run as failed.
+    continue-on-error: ${{ matrix.optional == true }}
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure
         shell: bash
         run: |
