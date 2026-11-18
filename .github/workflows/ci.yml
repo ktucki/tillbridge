@@ -13,15 +13,9 @@ jobs:
             cxx: g++
           - os: ubuntu-latest
             cxx: clang++
-          # Intel macOS runner: the arm64 runners (macos-latest) were often not
-          # available and the job was cancelled before it started.
-          - os: macos-15-intel
-            cxx: clang++
-            optional: true
           - os: windows-latest
             cxx: ""
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.optional == true }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -34,3 +28,18 @@ jobs:
         run: cmake --build build --config Release --parallel 2
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+
+  # macOS: started by hand (Actions > CI > Run workflow), because hosted macOS
+  # runners were not available to this repository and the job never started.
+  build-test-macos:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel 2
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
