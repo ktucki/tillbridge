@@ -1,5 +1,6 @@
 // tillbridge - command line interface.
 // Copyright (c) 2026 Karol Tucki. MIT License.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

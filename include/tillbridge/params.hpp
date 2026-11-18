@@ -1,6 +1,7 @@
 // TillBridge - solver parameters.
 // Copyright (c) 2026 Karol Tucki. MIT License.
 #pragma once
+#include <stdexcept>
 #include <string>
 #include <vector>
 

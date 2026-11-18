@@ -20,7 +20,7 @@
 
 namespace tb {
 
-constexpr const char* kVersion = "2.0.0";
+constexpr const char* kVersion = "2.0.1";
 
 struct ForceSample {
     double t, Fx, Fy, Fz, Ekin, x_tool;

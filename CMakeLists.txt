@@ -1,6 +1,6 @@
 # TillBridge build. Copyright (c) 2026 Karol Tucki. MIT License.
 cmake_minimum_required(VERSION 3.14)
-project(tillbridge VERSION 2.0.0 LANGUAGES CXX)
+project(tillbridge VERSION 2.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

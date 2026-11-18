@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1 (2026-11-18)
+
+* Missing `#include <algorithm>` in the command line program and two test files; the code now
+  builds with GCC 13 and later and with MSVC.
+
 ## 2.0.0 (2026-11-18)
 
 * Open mesh format: Gmsh `.msh` (versions 2.2 and 4.1) is read by `fem`, and `convert` writes an

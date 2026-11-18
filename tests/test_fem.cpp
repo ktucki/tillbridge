@@ -1,6 +1,7 @@
 // Finite element verification: patch tests, cantilever against beam theory, AMG against Jacobi,
 // ANSYS mesh reading.
 // Copyright (c) 2026 Karol Tucki. MIT License.
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
