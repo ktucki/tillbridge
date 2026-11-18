@@ -13,14 +13,14 @@ jobs:
             cxx: g++
           - os: ubuntu-latest
             cxx: clang++
-          - os: macos-latest
+          # Intel macOS runner: the arm64 runners (macos-latest) were often not
+          # available and the job was cancelled before it started.
+          - os: macos-15-intel
             cxx: clang++
             optional: true
           - os: windows-latest
             cxx: ""
     runs-on: ${{ matrix.os }}
-    # Hosted macOS runners are often unavailable for a long time; a macOS job that
-    # cannot start must not mark the whole run as failed.
     continue-on-error: ${{ matrix.optional == true }}
     timeout-minutes: 30
     steps:
