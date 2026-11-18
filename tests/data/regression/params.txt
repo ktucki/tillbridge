@@ -1,0 +1,18 @@
+# regression case: chisel tine 6 cm deep in a settled 10 cm bed of 622 spheres
+E = 2.6e6
+nu = 0.3
+mu_pp = 0.5
+mu_pw = 0.5
+e = 0.4
+mu_r = 0.3
+k_coh = 0
+dt = 5e-5
+t_end = 0.25
+t_tool = 0.0
+v_tool = 1.0
+out_dt = 0.005
+Lx = 0.4
+Ly = 0.25
+Lz = 0.4
+avg_x0 = 0.08
+avg_x1 = 0.22
