@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.1.0 (2026-11-25)
+
+* Energy accounting in every DEM run: work of the tool, energy taken up at the tool contacts and
+  by all other contacts (particle–particle, walls, rolling resistance, bonds), change of kinetic
+  and potential energy, and the closure error over the averaging window (`_summary.txt`,
+  `EnergyAccount`); `tillbridge energy` prints the directly accounted work done in the soil beside
+  the remainder of the draft work, and the closure error (docs/model.md).
+* `facet_wrench`: exact wrench of the facet forces in the frame of an FE model (Eq. (8) of the
+  paper), used by the chisel example instead of the resultant at the centre of pressure.
+* `paper/`: commands that reproduce the examples and figures of the paper, expected results with
+  tolerances, and the data of all figures and tables as CSV (`paper/figure_data`).
+* Tests: energy closure of the regression case, facet wrench.
+* Documentation: one-way coupling and load transfer, fatigue block and life, wear index
+  (docs/model.md).
+
 ## 2.0.1 (2026-11-18)
 
 * Missing `#include <algorithm>` in the command line program and two test files; the code now

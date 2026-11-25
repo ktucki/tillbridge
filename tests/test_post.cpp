@@ -75,3 +75,19 @@ TEST(centre_of_pressure_weighted) {
     Vec3 e = (t.centroid(0) * 1 + t.centroid(1) * 3) * 0.25;
     CHECK(norm(c - e) < 1e-12);
 }
+
+TEST(facet_wrench_matches_resultant) {
+    // two facets: the wrench about a point equals the sum of the facet forces at their centroids
+    Tool t;
+    t.tri.push_back({Vec3{0, 0, 0}, Vec3{1, 0, 0}, Vec3{0, 1, 0}});
+    t.tri.push_back({Vec3{0, 0, 1}, Vec3{1, 0, 1}, Vec3{0, 1, 1}});
+    std::vector<TriangleLoad> L(2);
+    L[0].F = {10, 0, 0}; L[1].F = {-4, 3, 0};
+    double R[3][3] = {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}};   // 90 deg about z
+    Vec3 F, M;
+    facet_wrench(t, L, 0, 2, R, {0, 0, 0}, 1000.0, {0, 0, 0}, F, M);
+    CHECK(norm(F - Vec3{-3, 6, 0}) < 1e-12);
+    Vec3 c0{-1000.0 / 3, 1000.0 / 3, 0}, c1{-1000.0 / 3, 1000.0 / 3, 1000};
+    Vec3 Me = cross(c0, Vec3{0, 10, 0}) + cross(c1, Vec3{-3, -4, 0});
+    CHECK(norm(M - Me) < 1e-9);
+}

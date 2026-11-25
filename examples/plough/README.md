@@ -59,9 +59,30 @@ python3 compare_calculix.py caseA caseA.vtk
 |---|---|---|
 | largest von Mises stress in the tube (MPa) | 37.1 | 65.5 |
 | largest stress range (MPa) | 30.2 | 53.4 |
-| fatigue life (h of ploughing) | about 40 000 | about 1400 |
+| fatigue life (h of ploughing), detail category 71 | about 40 000 | about 1400 |
 | displacements against CalculiX (relative norm) | 1.6 × 10⁻⁶ | 1.2 × 10⁻⁶ |
 | Gauss-point stresses against CalculiX (relative norm) | 1.2 × 10⁻⁷ | 1.2 × 10⁻⁷ |
 
-The DEM run is chaotic: a different compiler or number of threads changes the force history
-after a few tenths of a second, but not its mean and statistics.
+The FE cases use the mean loads of the run of the paper, given above, so that steps 4–7
+reproduce Table 5 exactly. The DEM run is chaotic: a different compiler or number of threads
+changes the force history after a few tenths of a second, but not its mean and statistics.
+
+## Repeated run with version 2.1.0 (GCC 13, two threads)
+
+| | value |
+|---|---|
+| draft (mean, steady part) | 5227 N (paper: 4960 and 5393 N on two beds) |
+| wrench about the reference point, step 3 | F = (−1519.0, 368.7, 4059.6) N, M = (−248 620, 143 750, −90 821) N mm |
+| sum of facet forces against the mean resultant | relative difference 2 × 10⁻⁸ |
+| work done in the soil: remainder / direct accounting | 3544 / 3742 J/m |
+| energy closure error | −198 J/m, −3.8 % of the draft work (first order in the time step) |
+| fatigue block | 1.4 m, 0.93 s, force every 0.01 s, 27 cycles (19.3 per metre) |
+| case D moment (same force at one third of the depth) | M = (2964.8, 143 750, 3313.8) N mm |
+| von Mises stress at the critical node, case A / case D | 39.5 / 68.1 MPa (paper: 37.1 / 65.5 MPa) |
+| largest range, case A / case D | 20.8 / 35.8 MPa |
+| life, detail category 71, case A / case D | unlimited (below the cut-off) / about 5300 h |
+| critical node of the tube (both cases) | node 21456 of shank.msh, (95.7, 337.0, −219.9) mm |
+| reactions at CLAMP against the applied force and moment | equal to the six printed digits |
+
+The lives depend on the few largest cycles of a short block: the run of the paper gave about
+40 000 h (case A) and 1400 h (case D); see Section 4.1 and Table 6 of the paper.

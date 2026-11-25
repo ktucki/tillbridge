@@ -63,6 +63,10 @@ Vec3 centre_of_pressure(const Tool& tool, const std::vector<TriangleLoad>& loads
 // Force and moment about ref in the FE frame, with p_fe = R p_dem + t.
 void wrench(const Vec3& F_dem, const Vec3& cop_dem, const double R[3][3], const Vec3& t, const Vec3& ref, Vec3& F, Vec3& M);
 // Nodal forces on a node set that reproduce force F and moment M about ref (rigid spider, RBE3-like).
+// Exact wrench of the facet forces of facets [first, end) about ref, in the frame of an FE model:
+// p' = scale (R p + t), F' = R F; F = sum R F_k, M = sum (p'_k - ref) x R F_k (Eq. (8) of the paper).
+void facet_wrench(const Tool& tool, const std::vector<TriangleLoad>& loads, size_t first, size_t end, const double R[3][3],
+                  const Vec3& t, double scale, const Vec3& ref, Vec3& F, Vec3& M);
 std::map<int64_t, Vec3> distribute(const Mesh& mesh, const std::vector<int64_t>& nodes, const Vec3& F, const Vec3& M, const Vec3& ref);
 // |F(t)| with the tool between x0 and x1.
 std::vector<double> force_magnitude(const std::vector<ForceSample>& h, double x0, double x1);

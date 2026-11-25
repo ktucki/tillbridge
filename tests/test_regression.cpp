@@ -61,3 +61,18 @@ TEST(regression_chisel_against_reference) {
     CHECK_REL(a[2] / n, b[2] / n, 0.05);
     std::printf("  %d of %zu force samples identical to the reference (to the printed digits)\n", same, ref.size());
 }
+
+TEST(energy_accounting_closes) {
+    // the work of the tool equals draft x distance, and the energy taken up by the contacts plus
+    // the change of kinetic and potential energy accounts for it within the integration error
+    const std::string d = std::string(TB_TEST_DATA) + "/regression/";
+    Params p = Params::read(d + "params.txt");
+    p.out = "tb_test_energy";
+    RunResult r = run_dem(p, Bed::read(d + "bed.txt"), Tool::read(d + "tine.txt"), false);
+    CHECK(!r.unstable);
+    const EnergyAccount& e = r.energy;
+    CHECK_NEAR(e.distance, p.avg_x1 - p.avg_x0, 2 * p.dt * p.v_tool);
+    CHECK_REL(e.tool, r.draft() * e.distance, 2e-3);
+    CHECK(e.bulk > 0 && e.tool_contacts > 0);
+    CHECK(std::fabs(e.closure()) < 0.03 * e.tool);
+}

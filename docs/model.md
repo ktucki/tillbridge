@@ -55,7 +55,35 @@ the number of contacts, the force vector and the power dissipated at the contact
 the tangential part P_t = −F_t · v_t (friction) and the normal part (damping). Their sums give
 the energy balance of the draft work per metre of travel (`tillbridge energy`): D · 1 m =
 friction + normal damping + work done in the soil. The frictional power density
-q_f = P_t / A on each triangle is a relative wear index (`tillbridge wear`).
+q_f = P_t / A (W m⁻²) on each triangle is a relative wear index (`tillbridge wear`): by Archard's
+law the wear rate is proportional to p v_s = q_f / μ_pw for sliding contacts. It is not calibrated
+against measured material loss; a wear rate in m³ per metre of travel needs a wear coefficient
+from tests.
+
+## Energy accounting (version 2.1)
+
+The work done in the soil can be obtained in two ways. `tillbridge energy` gives it as the
+remainder of the draft work, D − (P_t + P_n)/v_tool. In addition, every run accounts directly for
+the energy over the averaging window and writes it to `_summary.txt`:
+
+* `E_tool` — work of the tool on the soil, the sum of F_c · v_tool over the tool contacts;
+* `E_tool_contacts` — energy taken up at the tool contacts by the relative motion, the sum of
+  −F_c · (v_i − v_tool) (the integral of P_t + P_n);
+* `E_bulk` — energy taken up by all other contacts: particle–particle (including the rolling
+  moments), walls and bonds, the sum of −(F_c · v_i + M_r · ω_i) taken from both bodies of each
+  contact. It is the energy dissipated by friction and contact damping plus the change of the
+  elastic and cohesive energy stored in the contacts;
+* `dE_kinetic`, `dE_potential` — change of the kinetic and gravitational energy of all bodies
+  between the start and the end of the window;
+* `E_closure` = E_tool − E_tool_contacts − E_bulk − dE_kinetic − dE_potential.
+
+The powers are evaluated with the same contact forces and contact-point velocities that drive
+the bodies, so the bookkeeping is exact for each step; `E_closure` is the energy error of the
+symplectic Euler integration. The solver has no numerical (global or local non-viscous) damping:
+the only dissipation is the viscous contact damping of Eqs. (1)–(2), Coulomb friction and the
+plastic part of the rolling resistance. `tillbridge energy` prints the directly accounted work
+done in the soil, (E_bulk + dE_kinetic + dE_potential) per metre, beside the remainder, and the
+closure error relative to the tool work.
 
 ## Stability
 
@@ -70,14 +98,29 @@ reduced 2×2×2 for imported SOLID186) and 10-node tetrahedra (4-point rule). Th
 matrix is assembled in compressed sparse row form and solved by the conjugate gradient method
 preconditioned with smoothed-aggregation algebraic multigrid (geometric aggregates, the six
 rigid-body modes as near-null space, damped-Jacobi prolongation smoothing, a dense Cholesky
-factorisation on the coarse level) or with Jacobi. The soil load is applied as a distributed
-coupling (RBE3-like): nodal forces on a node set that reproduce the force and the moment about a
-reference point.
+factorisation on the coarse level) or with Jacobi.
+
+## Load transfer
+
+The coupling is one-way: the tool is rigid and moves along a prescribed straight path, its
+deformation does not act back on the soil, and the loads are applied afterwards to a linear
+elastic FE model. `tillbridge loads` reduces the window-mean force of every facet, acting at the
+facet centroid, to the exact wrench about a reference point of the FE model (F = Σ R F_k,
+M = Σ (p'_k − x_ref) × R F_k). The facet forces themselves are not mapped to FE nodes, because the
+FE model is usually a different member (the shank) from the loaded surface (the body). The wrench
+is applied as a distributed coupling (RBE3-like): nodal forces f_i = F/n + w × (x_i − c) on the
+node set, with w = S⁻¹ M_c and S = Σ (|r_i|² I − r_i r_iᵀ), which reproduce F and the moment
+exactly (to rounding). A rigid spider would add stiffness; this coupling does not.
 
 ## Fatigue
 
 The tool force history in the averaging window gives a stress history σ(t) = σ_ref |F(t)| / F_ref
-(linear elasticity, proportional loading). Cycles are counted with the three-point rainflow
+(linear elasticity, proportional loading: the direction and the point of application of the
+load are taken as constant, so only its magnitude varies). σ_ref is the stress at the critical
+location for the mean load, F_ref the mean of |F(t)| over the window. The window is one load
+block; the damage of the block divided by the distance gives the damage per metre, and the life
+in hours follows for continuous work at the travel speed of the run, L = 1 / (D_m/L_block · v ·
+3600). The life therefore holds only for the operating spectrum represented by the block. Cycles are counted with the three-point rainflow
 algorithm (ASTM E1049-85) and damage is summed with the Palmgren–Miner rule on the
 EN 1993-1-9 S–N curve of the chosen detail category (slope 3 to 5·10⁶ cycles, slope 5 to the
 cut-off at 10⁸ cycles, γ_Mf = 1); the life is also given without the cut-off.

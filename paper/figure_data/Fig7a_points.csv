@@ -1,0 +1,4 @@
+point,k_coh (kPa),mu_pw (-),k_coh low (kPa),k_coh high (kPa)
+reference,90,0.5,,
+estimate,65.8002,0.573195,,
+mu_pw measured,85,0.5,75,95

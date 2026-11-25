@@ -254,6 +254,18 @@ RunResult Simulation::run(bool verbose) {
     double t = 0, nextout = 0;
     long step = 0;
     double kemin = 1e300, mtot = 0;
+    // energy accounting over the averaging window (Section "energy closure" of docs/model.md):
+    // work of the tool, energy taken up by the tool contacts (relative motion), by all other contacts
+    // (particle-particle, walls, rolling resistance, bonds), and the change of kinetic and potential energy
+    double eTool = 0, eToolRel = 0, eBulk = 0, eMech0 = 0, eMech1 = 0, ePot0 = 0, ePot1 = 0;
+    bool winStarted = false;
+    auto mech = [&](double& kin, double& pot) {
+        kin = 0; pot = 0;
+        for (int b = 0; b < NB; b++) {
+            kin += 0.5 * S.bm[b] * dot(S.bv[b], S.bv[b]) + 0.5 * S.bI[b] * dot(S.bw[b], S.bw[b]);
+            pot += S.bm[b] * P.g * S.bx[b].z;
+        }
+    };
     for (int b = 0; b < NB; b++) mtot += S.bm[b];
     // effective moduli are constant per pair of materials
     const double Eww = effective_modulus(P.E, P.nu, P.E_wall, P.nu_wall), Gww = effective_shear_modulus(P.E, P.nu, P.E_wall, P.nu_wall);
@@ -261,6 +273,8 @@ RunResult Simulation::run(bool verbose) {
     while (t < P.t_end - 0.5 * P.dt) {
         const bool moving = t >= P.t_tool;
         const Vec3 tp = moving ? toolv * (t - P.t_tool) : Vec3{};
+        const bool inWin = moving && tp.x >= P.avg_x0 && tp.x <= P.avg_x1;
+        if (inWin && !winStarted) { mech(eMech0, ePot0); winStarted = true; }
 #pragma omp parallel for
         for (int s = 0; s < NS; s++) { int b = S.sb[s]; S.sx[s] = S.bx[b] + rotate(S.bq[b], S.srel[s]); }
         S.bin_particles();
@@ -269,7 +283,8 @@ RunResult Simulation::run(bool verbose) {
         std::fill(tW.begin(), tW.end(), 0.0);
         double ftx = 0, fty = 0, ftz = 0;
         long long ncp = 0;
-#pragma omp parallel for schedule(dynamic, 256) reduction(+ : ftx, fty, ftz, ncp)
+        double pBulk = 0, pTool = 0, pToolRel = 0;
+#pragma omp parallel for schedule(dynamic, 256) reduction(+ : ftx, fty, ftz, ncp, pBulk, pTool, pToolRel)
         for (int s = 0; s < NS; s++) {
             Vec3 F, T;
             const int b = S.sb[s];
@@ -316,7 +331,9 @@ RunResult Simulation::run(bool verbose) {
                                 double mlim = P.mu_r * Reff * (fnn > 0 ? fnn : 0), mm = norm(mr);
                                 if (mm > mlim) mr = mm > 0 ? mr * (mlim / mm) : mr;
                                 T = T + mr;
+                                pBulk -= dot(mr, S.bw[b]);
                             }
+                            pBulk -= dot(Fc, vi);
                             if (nn < kMaxContacts) { new (&newc[nn]) Contact{j, ut, mr}; nn++; }
                         }
                     }
@@ -335,6 +352,7 @@ RunResult Simulation::run(bool verbose) {
                 double Gw = S.sE[s] == P.E ? Gww : effective_shear_modulus(S.sE[s], P.nu, P.E_wall, P.nu_wall);
                 Vec3 Fc = hertz_mindlin(del, wn[w], vi, S.sr[s], S.bm[b], Ew, Gw, P.mu_pw, beta, P.dt, 0.0, 0.0, ut);
                 hist = ut;
+                pBulk -= dot(Fc, vi);
                 F = F + Fc;
                 T = T + cross(xc - S.bx[b], Fc);
             }
@@ -369,6 +387,8 @@ RunResult Simulation::run(bool verbose) {
                         F = F + Fc;
                         T = T + cross(xc - S.bx[b], Fc);
                         ftx -= Fc.x; fty -= Fc.y; ftz -= Fc.z;
+                        pTool += dot(Fc, toolv);
+                        pToolRel -= dot(Fc, vi - toolv);
                         double fnrm = dot(Fc, n);
                         // dissipated power at the contact: tangential (friction) and normal (damping) part
                         Vec3 vr = vi - toolv;
@@ -406,7 +426,8 @@ RunResult Simulation::run(bool verbose) {
         const int nbond = int(S.bs_.size());
         if (nbond) {
             long nbt = 0, nbs = 0;
-#pragma omp parallel for schedule(static) reduction(+ : nbt, nbs)
+            double pBond = 0;
+#pragma omp parallel for schedule(static) reduction(+ : nbt, nbs, pBond)
             for (int q = 0; q < nbond; q++) {
                 if (!S.balive[q]) continue;
                 int s = S.bs_[q], j = S.bj_[q], bi = S.sb[s], bjj = S.sb[j];
@@ -441,6 +462,7 @@ RunResult Simulation::run(bool verbose) {
                 Vec3 Fb = n * (S.bfn[q] - cn * vn) + Fs + vt * (-ct);
                 Vec3 Ti = cross(xc - S.bx[bi], Fb) + Mb + n * S.bmt[q];
                 Vec3 Tj = cross(xc - S.bx[bjj], Fb * -1.0) - (Mb + n * S.bmt[q]);
+                pBond -= dot(Fb, S.bv[bi]) + dot(Ti, S.bw[bi]) - dot(Fb, S.bv[bjj]) + dot(Tj, S.bw[bjj]);
 #pragma omp atomic
                 S.bf[bi].x += Fb.x;
 #pragma omp atomic
@@ -467,6 +489,7 @@ RunResult Simulation::run(bool verbose) {
                 S.bt[bjj].z += Tj.z;
             }
             S.nbroken_t += nbt; S.nbroken_s += nbs;
+            pBulk += pBond;
         }
         // semi-implicit Euler, spherical inertia, quaternion update
 #pragma omp parallel for
@@ -486,7 +509,9 @@ RunResult Simulation::run(bool verbose) {
                 normalize(S.bq[b]);
             }
         }
-        if (moving && tp.x >= P.avg_x0 && tp.x <= P.avg_x1) {
+        if (inWin) {
+            eTool += pTool * P.dt; eToolRel += pToolRel * P.dt; eBulk += pBulk * P.dt;
+            mech(eMech1, ePot1);
             for (int q = 0; q < 5 * NT; q++) tFacc[q] += tF[q];
             for (int q = 0; q < 2 * NT; q++) tWacc[q] += tW[q];
             Facc[0] += ftx; Facc[1] += fty; Facc[2] += ftz;
@@ -533,6 +558,11 @@ RunResult Simulation::run(bool verbose) {
     R.mean_contacts_per_step = step ? double(ncontact_pp) / step : 0.0;
     R.bonds_broken_tension = S.nbroken_t; R.bonds_broken_shear = S.nbroken_s;
     if (nacc) R.F_mean = {Facc[0] / nacc, Facc[1] / nacc, Facc[2] / nacc};
+    if (nacc) {
+        R.energy.tool = eTool; R.energy.tool_contacts = eToolRel; R.energy.bulk = eBulk;
+        R.energy.kinetic = eMech1 - eMech0; R.energy.potential = ePot1 - ePot0;
+        R.energy.distance = nacc * P.dt * P.v_tool;
+    }
     R.triangles.resize(NT);
     for (int q = 0; q < NT; q++) {
         TriangleLoad& L = R.triangles[q];
@@ -571,6 +601,9 @@ std::map<std::string, double> RunResult::summary() const {
     m["bonds"] = double(bonds.size()); m["bonds_broken_tension"] = double(bonds_broken_tension);
     m["bonds_broken_shear"] = double(bonds_broken_shear); m["n_avg"] = double(n_avg);
     m["Fx_mean"] = F_mean.x; m["Fy_mean"] = F_mean.y; m["Fz_mean"] = F_mean.z;
+    m["E_tool"] = energy.tool; m["E_tool_contacts"] = energy.tool_contacts; m["E_bulk"] = energy.bulk;
+    m["dE_kinetic"] = energy.kinetic; m["dE_potential"] = energy.potential; m["E_distance"] = energy.distance;
+    m["E_closure"] = energy.closure();
     return m;
 }
 
@@ -623,6 +656,8 @@ void RunResult::write(const std::string& prefix) const {
     std::fprintf(f, "bonds = %zu\nbonds_broken_tension = %ld\nbonds_broken_shear = %ld\n", bonds.size(), bonds_broken_tension,
                  bonds_broken_shear);
     std::fprintf(f, "n_avg = %ld\nFx_mean = %.6f\nFy_mean = %.6f\nFz_mean = %.6f\n", n_avg, F_mean.x, F_mean.y, F_mean.z);
+    std::fprintf(f, "E_distance = %.6f\nE_tool = %.6e\nE_tool_contacts = %.6e\nE_bulk = %.6e\ndE_kinetic = %.6e\ndE_potential = %.6e\nE_closure = %.6e\n",
+                 energy.distance, energy.tool, energy.tool_contacts, energy.bulk, energy.kinetic, energy.potential, energy.closure());
     std::fclose(f);
 }
 

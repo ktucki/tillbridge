@@ -86,36 +86,60 @@ def calibration_log(path):
 S = keyvalue(OUT / "summary.txt")
 CAL = calibration_log(OUT / "calibration.log")
 
-# ------------------------------------------------------------ Fig. 2 calibration
+# ------------------------------------------------------------ Fig. 7 of the paper: calibration
+# (a) parameter sets of the runs and chi2 consistency contours of the surrogates (not a posterior);
+# (b) forces of the runs and of the four simulated reference passes.
 x = np.array([c["x"] for c in CAL]); lhs = np.array([c["src"] == "lhs" for c in CAL])
 D = np.array([c["draft"] for c in CAL]); V = np.array([c["vertical"] for c in CAL])
-fig, (a, b) = plt.subplots(1, 2, figsize=(W2, 2.7), gridspec_kw=dict(wspace=0.32))
-a.plot(x[lhs, 0] / 1e3, x[lhs, 1], "o", mfc="white", mec=COLOURS[0], mew=0.6, label="start design")
-a.plot(x[~lhs, 0] / 1e3, x[~lhs, 1], "s", mfc="white", mec=COLOURS[1], mew=0.6, label="Bayesian steps")
-a.plot(S["k_coh_true"] / 1e3, S["mu_pw_true"], "x", color="black", ms=6, mew=0.8, label="reference")
-a.plot(S["k_coh_estimate"] / 1e3, S["mu_pw_estimate"], "+", color=COLOURS[2], ms=9, mew=0.8, label="estimate")
-a.errorbar(S["k_coh_calibrated"] / 1e3, S["mu_pw_measured"], xerr=[[(S["k_coh_calibrated"] - S["k_coh_low"]) / 1e3], [(S["k_coh_high"] - S["k_coh_calibrated"]) / 1e3]],
-           fmt="D", ms=3.5, mfc="white", mec=COLOURS[3], ecolor=COLOURS[3], elinewidth=0.6, capsize=2, mew=0.6, label="$\\mu_{pw}$ measured")
 mp = np.genfromtxt(OUT / "calibration_map.csv", delimiter=",", names=True)
 nc, nm = len(np.unique(mp["k_coh"])), len(np.unique(mp["mu_pw"]))
-a.contour(mp["k_coh"].reshape(nc, nm) / 1e3, mp["mu_pw"].reshape(nc, nm), mp["chi2"].reshape(nc, nm), levels=[2.30], colors="black", linewidths=0.6)
-a.contour(mp["k_coh"].reshape(nc, nm) / 1e3, mp["mu_pw"].reshape(nc, nm), mp["chi2"].reshape(nc, nm), levels=[6.18], colors="black", linewidths=0.6, linestyles=":")
-a.set_xlim(0, 180); a.set_xticks(np.arange(0, 181, 30)); a.set_ylim(0.2, 0.9); a.set_yticks(np.arange(0.2, 0.91, 0.1))
-a.set_xlabel("cohesion $k_{coh}$ (kPa)"); a.set_ylabel("soil–steel friction $\\mu_{pw}$ (–)")
-a.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, handletextpad=0.3, columnspacing=1.0)
-a.grid(False)
-n = np.arange(1, len(CAL) + 1)
-b.plot(n, D, "o-", mfc="white", mew=0.6, label="draft force")
-b.plot(n, V, "s-", mfc="white", mew=0.6, label="vertical force")
-b.axhline(S["draft_reference"], color=COLOURS[0], ls=":", lw=0.6, label="reference values")
-b.axhline(S["vertical_reference"], color=COLOURS[1], ls=":", lw=0.6)
-b.set_xlabel("run (–)"); b.set_ylabel("force (N)")
-b.set_xlim(0, 2 * int(np.ceil((len(CAL) + 1) / 2))); b.set_xticks(np.arange(0, b.get_xlim()[1] + 1, 2))
-nice(b, "y", zero=True)
-b.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, handletextpad=0.3, columnspacing=1.0)
+K, M, C2 = (mp[k].reshape(nc, nm) for k in ("k_coh", "mu_pw", "chi2"))
+PD = np.array([S[f"draft_pass_{k}"] for k in range(1, 5)]); PV = np.array([S[f"vertical_pass_{k}"] for k in range(1, 5)])
+
+
+def panel_a(a):
+    a.plot(x[lhs, 0] / 1e3, x[lhs, 1], "o", mfc="white", mec="black", mew=0.6, label="start design")
+    a.plot(x[~lhs, 0] / 1e3, x[~lhs, 1], "s", mfc="white", mec=COLOURS[1], mew=0.6, label="Bayesian steps")
+    a.plot(S["k_coh_true"] / 1e3, S["mu_pw_true"], "x", color="black", ms=6, mew=0.8, label="reference")
+    a.plot(S["k_coh_estimate"] / 1e3, S["mu_pw_estimate"], "+", color=COLOURS[2], ms=9, mew=0.8, label="estimate")
+    a.errorbar(S["k_coh_calibrated"] / 1e3, S["mu_pw_measured"],
+               xerr=[[(S["k_coh_calibrated"] - S["k_coh_low"]) / 1e3], [(S["k_coh_high"] - S["k_coh_calibrated"]) / 1e3]],
+               fmt="D", ms=3.5, mfc="white", mec=COLOURS[3], ecolor=COLOURS[3], elinewidth=0.6, capsize=2, mew=0.6,
+               label="$\\mu_{pw}$ known")
+    a.contour(K / 1e3, M, C2, levels=[2.30], colors=COLOURS[0], linewidths=0.6)
+    a.contour(K / 1e3, M, C2, levels=[6.18], colors=COLOURS[0], linewidths=0.6, linestyles=":")
+    a.plot([], [], color=COLOURS[0], lw=0.6, label="agreement, 68%")
+    a.plot([], [], color=COLOURS[0], lw=0.6, ls=":", label="agreement, 95%")
+    a.set_xlim(0, 180); a.set_xticks(np.arange(0, 181, 30)); a.set_ylim(0.2, 0.9); a.set_yticks(np.arange(0.2, 0.91, 0.1))
+    a.grid(True, axis="both")
+    a.set_xlabel("cohesion $k_{coh}$ (kPa)"); a.set_ylabel("soil–steel friction $\\mu_{pw}$ (–)")
+    a.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, handletextpad=0.3, columnspacing=1.0)
+
+
+def panel_b(b):
+    b.plot(D[lhs], V[lhs], "o", mfc="white", mec="black", mew=0.6, label="start design")
+    b.plot(D[~lhs], V[~lhs], "s", mfc="white", mec=COLOURS[1], mew=0.6, label="Bayesian steps")
+    b.plot(PD, PV, ".", color="black", ms=4, label="reference passes (simulated)")
+    b.errorbar(S["draft_reference"], S["vertical_reference"], xerr=S["draft_reference_sd"], yerr=S["vertical_reference_sd"],
+               fmt="x", color="black", ms=6, mew=0.8, elinewidth=0.6, capsize=2, label="reference mean ± s.d.")
+    b.set_xlim(150, 350); b.set_xticks(np.arange(150, 351, 50)); b.set_ylim(0, 80); b.set_yticks(np.arange(0, 81, 10))
+    b.grid(True, axis="both")
+    b.set_xlabel("draft (N)"); b.set_ylabel("vertical force (N)")
+    b.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, handletextpad=0.3, columnspacing=1.0)
+
+
+for name, f in (("Fig7a", panel_a), ("Fig7b", panel_b)):
+    fig, ax = plt.subplots(figsize=(W1, W1 * 0.95))
+    fig.subplots_adjust(left=0.17, right=0.96, bottom=0.13, top=0.70)
+    f(ax)
+    for ext in ("png", "svg"):
+        fig.savefig(OUT / f"{name}.{ext}")   # same size for both panels
+    plt.close(fig)
+fig, (a, b) = plt.subplots(1, 2, figsize=(W2, 3.2), gridspec_kw=dict(wspace=0.32))
+panel_a(a); panel_b(b)
 for ax, l in ((a, "a"), (b, "b")):
-    ax.text(0.5, -0.27, f"({l})", transform=ax.transAxes, ha="center", va="top")
-save(fig, "Fig2_calibration")
+    ax.text(0.5, -0.2, f"({l})", transform=ax.transAxes, ha="center", va="top")
+save(fig, "Fig7_calibration")
 
 # ------------------------------------------------------------ Fig. 3 force history and wear index
 fb = force("calibrated")

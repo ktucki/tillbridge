@@ -1,0 +1,12 @@
+case,reference,quantity,tillbridge,reference_value,relative_difference
+sphere resting on the floor,Hertz,overlap,8.42162e-05,8.42162e-05,-1.653e-12
+"normal impact, 1.5 and 3 m/s",Tsuji et al. damping,rebound ratio at 3 vs 1.5 m/s,0.808096,0.808094,3.326e-06
+"oblique impact on a wall, sliding","Chung and Ooi, test 6",tangential velocity,2.53492,2.53492,1.332e-15
+"oblique impact on a wall, sliding","Chung and Ooi, test 6",angular velocity,76.707,77.5132,-0.0104
+spinning sphere set down on a floor,rigid-body dynamics,final velocity,0.429604,0.428571,0.00241
+sphere on a moving tool plate,rigid-body dynamics,final velocity,0.144005,0.142857,0.008033
+oblique collision of two spheres,"Chung and Ooi, test 7",angular velocity,27.1368,27.1537,-0.000623
+"cantilever, 20-node hexahedra",Timoshenko beam,tip deflection,0.955123,0.95981,-0.004883
+"cantilever, 20-node hexahedra",equilibrium,reaction,1000,1000,4.785e-10
+rainflow counting,"ASTM E1049, Fig. 6",number of cycles,4,4,0
+"S-N curve, detail category 71",EN 1993-1-9,cycles at the fatigue limit,5000000,5000000,2.22e-16

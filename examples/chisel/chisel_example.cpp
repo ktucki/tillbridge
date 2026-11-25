@@ -9,7 +9,7 @@
 //  4. transfer the calibrated tool load to a finite element model of the tine shank;
 //  5. compute the fatigue life of the shank from the force history.
 //
-// Usage: chisel_example [OUTDIR]   (default ./out; about 15 min on four cores)
+// Usage: chisel_example [OUTDIR]   (default ./out; see examples/chisel/README.md for the run time and expected output)
 // Steps that have finished are not repeated (bed, reference run, calibration log).
 // Figures: python make_figures.py OUTDIR
 //
@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
     for (auto& T : tine.tri) for (auto& p : T) if (p.z < tip.z) tip = p;
     Vec3 Rtip{dot(ex, tip), dot(ey, tip), dot(ez, tip)};
     Vec3 F, M;
-    wrench(res.F_mean(), cop * 1000.0, R, Rtip * -1000.0, {}, F, M);   // N and N mm about the tip
+    facet_wrench(tine, res.triangles, 0, tine.size(), R, Rtip * -1.0, 1000.0, {}, F, M);   // exact wrench, N and N mm about the tip
     std::vector<int64_t> top, loaded;
     for (size_t i = 0; i < mesh.n_nodes(); i++) {
         const Vec3& x = mesh.X[i];

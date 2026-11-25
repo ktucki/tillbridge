@@ -83,7 +83,7 @@ An empty tool (`0`, or the word `none` on the command line) is used for settling
 | `<out>_depart.txt` | particles leaving the tool: sphere index, body index, position, velocity and tool displacement at the end of the last tool contact |
 | `<out>_bonds.txt` | with bonds: body indices of the bonded pair and 1 (intact) or 0 (broken) |
 | `<out>_snap_NNNN.txt` | with `snap_dt` > 0: body positions and velocities |
-| `<out>_summary.txt` | `key = value`: version, run size, steps, CPU time, mean number of contacts, bonds created and broken, number of samples in the averaging window and the mean tool force; for an unstable run the time and the speed or energy at which it stopped |
+| `<out>_summary.txt` | `key = value`: version, run size, steps, CPU time, mean number of contacts, bonds created and broken, number of samples in the averaging window and the mean tool force; since version 2.1 also the energy accounting over the averaging window (`E_distance` in m; `E_tool`, `E_tool_contacts`, `E_bulk`, `dE_kinetic`, `dE_potential`, `E_closure` in J, see docs/model.md); for an unstable run the time and the speed or energy at which it stopped |
 | `<out>_params.txt` | the parameters of the run |
 
 The files have the same layout as those of the earlier C solver (version 1.x), so results of

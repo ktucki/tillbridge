@@ -182,6 +182,21 @@ void wrench(const Vec3& Fd, const Vec3& cop, const double R[3][3], const Vec3& t
     M = cross(p - ref, F);
 }
 
+void facet_wrench(const Tool& tool, const std::vector<TriangleLoad>& L, size_t first, size_t end, const double R[3][3],
+                  const Vec3& t, double scale, const Vec3& ref, Vec3& F, Vec3& M) {
+    if (L.size() != tool.size()) throw std::invalid_argument("triangle count of the run and the tool differ");
+    end = std::min(end, tool.size());
+    auto rot = [&](const Vec3& p) {
+        return Vec3{R[0][0] * p.x + R[0][1] * p.y + R[0][2] * p.z, R[1][0] * p.x + R[1][1] * p.y + R[1][2] * p.z,
+                    R[2][0] * p.x + R[2][1] * p.y + R[2][2] * p.z};
+    };
+    F = Vec3{}; M = Vec3{};
+    for (size_t k = first; k < end; k++) {
+        Vec3 c = (rot(tool.centroid(k)) + t) * scale, Fk = rot(L[k].F);
+        F += Fk; M += cross(c - ref, Fk);
+    }
+}
+
 std::map<int64_t, Vec3> distribute(const Mesh& mesh, const std::vector<int64_t>& nodes, const Vec3& F, const Vec3& M0, const Vec3& ref) {
     if (nodes.size() < 3) throw std::invalid_argument("load distribution needs at least three nodes");
     Vec3 c;

@@ -1,0 +1,17 @@
+quantity,case A,case D,unit
+Fx,-1304.41,-1304.41,N
+Fy,347.594,347.594,N
+Fz,3957.55,3957.55,N
+Mx,-254573,-587.6254411085465,N mm
+My,188732,188732.0000000009,N mm
+Mz,-63871.4,19842.27700429895,N mm
+reference point x,109.65347574,107.9892384554987,mm
+reference point y,516.80816546,453.0742182274352,mm
+reference point z,-406.45131372,-401.4020559979043,mm
+"max von Mises, shank tube (nodal, extrapolated)",37.1,65.5,MPa
+peak at the bolt holes of the frog flange,57,118,MPa
+largest stress range,30.2,53.4,MPa
+cycles per metre,18,18,1/m
+fatigue life,40140,1372,h
+PCG iterations (AMG),837,865,-
+note,full nodal field: examples/plough/caseA.vtk,full nodal field: examples/plough/caseD.vtk,

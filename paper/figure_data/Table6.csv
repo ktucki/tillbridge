@@ -1,0 +1,5 @@
+detail category (MPa),cut-off limit (MPa),case A max range (MPa),case A damage per block,case A life (h),case A life without cut-off (h),case D max range (MPa),case D damage per block,case D life (h),case D life without cut-off (h)
+56,22.7,20.7608,0.0,inf,17729,35.837,2.0656719999999998e-07,1255.08,1157
+63,25.54,20.7608,0.0,inf,31949,35.837,1.0621687999999999e-07,2440.85,2085
+71,28.79,20.7608,0.0,inf,58083,35.837,4.912642e-08,5277.39,3790
+80,32.43,20.7608,0.0,inf,105489,35.837,1.861902e-08,13924.4,6883

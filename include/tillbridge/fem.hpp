@@ -44,6 +44,7 @@ struct Solution {
     std::vector<std::vector<double>> vm_elem;    // von Mises stress per element (max over Gauss points), per group
     std::vector<double> vm_node;                 // nodally averaged von Mises stress
     Vec3 reaction;                               // total reaction at the fixed nodes
+    Vec3 reaction_moment;                        // moment of the reactions about the origin
     int iterations = 0;
     double residual = 0;
 };

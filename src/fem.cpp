@@ -398,7 +398,11 @@ Solution solve_static(const Mesh& M, double E, double nu, const std::vector<int6
     std::vector<double> Ku;
     K.multiply(u, Ku);
     for (int64_t i = 0; i < nn; i++)
-        if (isfix[i]) for (int c = 0; c < 3; c++) S.reaction[c] += Ku[3 * i + c] - F[3 * i + c];
+        if (isfix[i]) {
+            Vec3 r{Ku[3 * i] - F[3 * i], Ku[3 * i + 1] - F[3 * i + 1], Ku[3 * i + 2] - F[3 * i + 2]};
+            S.reaction += r;
+            S.reaction_moment += cross(M.X[i], r);
+        }
     // von Mises stress per element (largest at the Gauss points) and nodal stresses: the stress components
     // at the Gauss points are extrapolated to the corner nodes (trilinear for hexahedra, linear for
     // tetrahedra), mid-side nodes take the mean of their edge, and every node averages the elements

@@ -20,7 +20,7 @@
 
 namespace tb {
 
-constexpr const char* kVersion = "2.0.1";
+constexpr const char* kVersion = "2.1.0";
 
 struct ForceSample {
     double t, Fx, Fy, Fz, Ekin, x_tool;
@@ -47,6 +47,17 @@ struct Bond {
     bool alive;
 };
 
+// Energy accounting over the averaging window (J): work of the tool on the soil, energy taken up
+// at the tool contacts by the relative motion (friction and normal damping, Eq. (5) of the paper),
+// energy taken up by all other contacts (particle-particle, walls, rolling resistance, bonds:
+// dissipation plus the change of the energy stored in the contacts), and the change of the
+// kinetic and potential energy of the soil. closure() is the part of the tool work that is not
+// accounted for, i.e. the error of the time integration.
+struct EnergyAccount {
+    double tool = 0, tool_contacts = 0, bulk = 0, kinetic = 0, potential = 0, distance = 0;
+    double closure() const { return tool - tool_contacts - bulk - kinetic - potential; }
+};
+
 struct RunResult {
     bool unstable = false;
     double t_unstable = 0, v_max_found = 0, ke_unstable = 0;
@@ -58,6 +69,7 @@ struct RunResult {
     long steps = 0, n_avg = 0, bonds_broken_tension = 0, bonds_broken_shear = 0;
     double cpu_s = 0, mean_contacts_per_step = 0;
     Vec3 F_mean;                     // mean force of the soil on the tool in the averaging window
+    EnergyAccount energy;            // energy accounting over the averaging window
 
     double draft() const { return -F_mean.x; }
     // Writes <prefix>_force.csv, _tri.csv, _triW.csv, _state.txt, _vel.txt, _depart.txt,

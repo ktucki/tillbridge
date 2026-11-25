@@ -18,8 +18,10 @@ designed from simulation:
    proposed in batches and logged, so a calibration can be resumed.
 3. **Assessment of the tool.** The work of the draft force is split into friction on the tool,
    normal contact damping and dissipation in the soil; the frictional power density on each
-   triangle gives a wear index (Archard). The soil load is reduced to a wrench at the centre of
-   pressure, transferred to the finite element model of the shank by a distributed coupling,
+   triangle gives a wear index (Archard). Every run also accounts for the energy directly and
+   reports the closure error of the energy balance. The facet forces are reduced to their exact
+   wrench, transferred to the finite element model of the shank by a distributed coupling
+   (one-way: the tool is rigid and its deformation does not act back on the soil),
    and solved with 8/20-node hexahedra or 10-node tetrahedra and an algebraic-multigrid
    preconditioned conjugate gradient solver. The force history gives a stress history, counted
    with the rainflow method and summed with the Palmgren–Miner rule on the EN 1993-1-9 S–N curves.
@@ -104,6 +106,7 @@ Continuous integration builds and tests on Linux (GCC, Clang), macOS (Apple Clan
 | `examples/chisel/` | worked example and figure script |
 | `examples/plough/` | mouldboard plough of the paper: soil bin, tool, shank mesh (Gmsh), commands and the check against CalculiX |
 | `examples/benchmarks/` | verification cases, FE convergence and solver scaling |
+| `paper/` | commands, expected results and the data of all figures and tables of the SoftwareX paper (CSV) |
 | `tests/` | verification tests and test data |
 
 ## Citation

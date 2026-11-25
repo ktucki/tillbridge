@@ -192,6 +192,18 @@ static int cmd_energy(int argc, char** argv) {
         kv.push_back({"soil_dissipation_J_per_m", e.soil_and_slice - s.kinetic - s.lifting});
         kv.push_back({"departed_particles", double(s.particles)});
     }
+    // direct energy accounting of the run (version 2.1 and later)
+    auto S = [&](const char* k) { auto it = r.summary.find(k); return it == r.summary.end() ? std::nan("") : it->second; };
+    const double L = S("E_distance");
+    if (L > 0) {
+        kv.push_back({"tool_work_J_per_m", S("E_tool") / L});
+        kv.push_back({"tool_contacts_J_per_m", S("E_tool_contacts") / L});
+        kv.push_back({"soil_direct_J_per_m", (S("E_bulk") + S("dE_kinetic") + S("dE_potential")) / L});
+        kv.push_back({"kinetic_change_J_per_m", S("dE_kinetic") / L});
+        kv.push_back({"potential_change_J_per_m", S("dE_potential") / L});
+        kv.push_back({"closure_J_per_m", S("E_closure") / L});
+        kv.push_back({"closure_relative", S("E_closure") / S("E_tool")});
+    }
     print(kv);
     return 0;
 }
@@ -276,6 +288,8 @@ static int cmd_fem(int argc, char** argv) {
     for (auto& u : s.U) umax = std::max(umax, norm(u));
     print({{"nodes", double(mesh.n_nodes())}, {"elements", double(mesh.n_elements())}, {"max_von_mises_nodal", vmax},
            {"max_displacement", umax}, {"reaction_x", s.reaction.x}, {"reaction_y", s.reaction.y}, {"reaction_z", s.reaction.z},
+           {"reaction_moment_x", (s.reaction_moment - cross(ref, s.reaction)).x}, {"reaction_moment_y", (s.reaction_moment - cross(ref, s.reaction)).y},
+           {"reaction_moment_z", (s.reaction_moment - cross(ref, s.reaction)).z},
            {"pcg_iterations", double(s.iterations)}});
     return 0;
 }

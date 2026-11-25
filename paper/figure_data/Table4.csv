@@ -1,0 +1,5 @@
+task,size,time
+"DEM, plough body","47 928 spheres, 7184 facets","61.6 ms per step (1 thread), 31.9 ms (2 threads)"
+"DEM, chisel example","7231 spheres, 192 facets",4.1 ms per step (2 threads)
+"FE, shank (ANSYS mesh)","166 095 nodes, 498 285 unknowns","7.2 min, 865 iterations"
+"Calibration, chisel example",20 DEM runs,about 18 min

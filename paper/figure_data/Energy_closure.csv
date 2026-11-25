@@ -1,0 +1,11 @@
+quantity,value,unit
+"draft work (repeated run, 1.5 m/s)",5227.04,J/m
+energy at the tool contacts,1683.13,J/m
+"work done in the soil, remainder",3543.91,J/m
+"work done in the soil, direct",3741.57,J/m
+closure error,-197.661,J/m
+closure error relative,-0.037815,-
+"regression case, dt 1e-4 s, closure relative",-0.0201,-
+"regression case, dt 5e-5 s, closure relative",-0.00962,-
+"regression case, dt 2.5e-5 s, closure relative",-0.00493,-
+"regression case, dt 1.25e-5 s, closure relative",-0.00237,-
